@@ -1,10 +1,15 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.jsx'
-import './index.css'
+// core styles are required for all packages
+import "@mantine/core/styles.css";
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App.jsx";
+import { MantineProvider } from "@mantine/core";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+    <MantineProvider defaultColorScheme="dark">
+      <App />
+    </MantineProvider>
+  </React.StrictMode>
+);
