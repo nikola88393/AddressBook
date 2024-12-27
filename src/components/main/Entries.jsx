@@ -8,6 +8,8 @@ import {
   Flex,
   NativeSelect,
   Divider,
+  Badge,
+  Box,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useState } from "react";
@@ -25,6 +27,8 @@ const addressBookData = [
     faxNumber: "02/7654321",
     mobilePhoneNumber: "0888123456",
     comment: "Основен контакт за логистика",
+    badge: "Логистика",
+    badgeColor: "blue",
   },
   {
     id: 2,
@@ -37,6 +41,8 @@ const addressBookData = [
     faxNumber: "032/443322",
     mobilePhoneNumber: "0899123456",
     comment: "Клиент за играчки",
+    badge: "Детски магазин",
+    badgeColor: "green",
   },
   {
     id: 3,
@@ -49,6 +55,8 @@ const addressBookData = [
     faxNumber: "052/554433",
     mobilePhoneNumber: "0878123456",
     comment: "Доставчик на офис консумативи",
+    badge: "Доставчик",
+    badgeColor: "red",
   },
   {
     id: 4,
@@ -61,6 +69,8 @@ const addressBookData = [
     faxNumber: "056/332211",
     mobilePhoneNumber: "0886123456",
     comment: "Контакт за дизайнерски услуги",
+    badge: "Дизайнер",
+    badgeColor: "purple",
   },
   {
     id: 5,
@@ -73,6 +83,8 @@ const addressBookData = [
     faxNumber: "082/665544",
     mobilePhoneNumber: "0885123456",
     comment: "Брокер на недвижими имоти",
+    badge: "Брокер",
+    badgeColor: "orange",
   },
 ];
 const Entries = () => {
@@ -114,11 +126,29 @@ const Entries = () => {
         align={{ base: "start", md: "center" }}
         gap="md"
       >
-        <NativeSelect
-          data={["Всички", "Еднакви имена", "Еднакви фамилии", "Обобщено"]}
-        />
-        <Flex gap="md" align="center">
-          <TextInput placeholder="Търсене по име" />
+        <Flex
+          w={{ base: "100%", md: "auto" }}
+          direction={{ base: "column", xs: "row" }}
+          align="center"
+          gap="md"
+        >
+          <NativeSelect
+            label="Подреди по"
+            w={{ base: "100%", md: "auto" }}
+            data={["Всички", "Еднакви имена", "Еднакви фамилии", "Обобщено"]}
+          />
+          <NativeSelect
+            label="Етикети"
+            w={{ base: "100%", md: "auto" }}
+            data={["Всички", "Еднакви имена", "Еднакви фамилии", "Обобщено"]}
+          />
+        </Flex>
+        <Flex w={{ base: "100%", md: "auto" }} gap="md" align="end">
+          <TextInput
+            w={{ base: "100%", md: "auto" }}
+            placeholder="Търсене по име"
+            label="Търсене по име"
+          />
           <Button>?</Button>
         </Flex>
       </Flex>
@@ -186,43 +216,57 @@ const Entries = () => {
       <Stack>
         {addressBook.map((entry) => {
           return (
-            <Card key={entry.id}>
-              <Flex
-                direction={{ base: "column", md: "row" }}
-                gap="md"
-                justify="space-between"
-                align={{ base: "start", md: "center" }}
-              >
-                <Flex direction={{ base: "column", md: "row" }} gap="xl">
-                  <span>{entry.firstName + " " + entry.lastName}</span>
-                  <span>{entry.emailAddress}</span>
-                  <span>{entry.phoneNumber}</span>
+            <Box pos="relative" p={10} key={entry.id}>
+              {entry.badge && (
+                <Badge
+                  radius="sm"
+                  color={entry.badgeColor}
+                  style={{ zIndex: 2 }}
+                  pos="absolute"
+                  top={4}
+                  left={30}
+                >
+                  {entry.badge}
+                </Badge>
+              )}
+              <Card p="xl">
+                <Flex
+                  direction={{ base: "column", md: "row" }}
+                  gap="md"
+                  justify="space-between"
+                  align={{ base: "start", md: "center" }}
+                >
+                  <Flex direction={{ base: "column", md: "row" }} gap="xl">
+                    <span>{entry.firstName + " " + entry.lastName}</span>
+                    <span>{entry.emailAddress}</span>
+                    <span>{entry.phoneNumber}</span>
+                  </Flex>
+                  <Flex direction={{ base: "row", xl: "column" }} gap="xs">
+                    <Button onClick={() => handleOpen(entry)}>Виж</Button>
+                    <Button
+                      color="red"
+                      onClick={() =>
+                        modals.openConfirmModal({
+                          title: "Изтриване на контакт",
+                          centered: true,
+                          children:
+                            "Сигурни ли сте, че искате да изтриете този контакт?",
+                          labels: { cancel: "Отказ", confirm: "Изтрий" },
+                          confirmProps: { color: "red" },
+                          onConfirm: () => {
+                            deleteEntry(entry.id);
+                            modals.close();
+                          },
+                          onCancel: () => modals.close(),
+                        })
+                      }
+                    >
+                      Изтрий
+                    </Button>
+                  </Flex>
                 </Flex>
-                <Flex direction={{ base: "row", xl: "column" }} gap="xs">
-                  <Button onClick={() => handleOpen(entry)}>Виж</Button>
-                  <Button
-                    color="red"
-                    onClick={() =>
-                      modals.openConfirmModal({
-                        title: "Изтриване на контакт",
-                        centered: true,
-                        children:
-                          "Сигурни ли сте, че искате да изтриете този контакт?",
-                        labels: { cancel: "Отказ", confirm: "Изтрий" },
-                        confirmProps: { color: "red" },
-                        onConfirm: () => {
-                          deleteEntry(entry.id);
-                          modals.close();
-                        },
-                        onCancel: () => modals.close(),
-                      })
-                    }
-                  >
-                    Изтрий
-                  </Button>
-                </Flex>
-              </Flex>
-            </Card>
+              </Card>
+            </Box>
           );
         })}
       </Stack>

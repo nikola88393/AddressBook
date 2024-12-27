@@ -18,7 +18,11 @@ const elements = [
 ];
 
 const Main = ({ activeKey }) => {
-  return <AppShell.Main>{elements[activeKey - 1].description}</AppShell.Main>;
+  return (
+    <AppShell.Main maw={1500} mr="auto" ml="auto">
+      {elements[activeKey - 1].description}
+    </AppShell.Main>
+  );
 };
 
 Main.propTypes = {
