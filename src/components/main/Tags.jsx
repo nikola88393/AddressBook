@@ -29,21 +29,22 @@ const Tags = () => {
       color: "red",
     },
   ]);
+
   const [opened, { open, close }] = useDisclosure();
+  const [isEditing, setIsEditing] = useState(false);
 
   const form = useForm({
     mode: "uncontrolled",
-    initialValues: {
-      name: "",
-      color: "#ffffff",
+    validate: {
+      name: (value) =>
+        value === undefined
+          ? "Името на етикета е задължително"
+          : value.length > 15
+          ? "Името на етикета трябва да е по-малко от 15 символа"
+          : null,
+      color: (value) =>
+        value === undefined ? "Цветът на етикета е задължителен" : null,
     },
-
-    // validate: {
-    //   name: (value) =>
-    //     value.length > 0 ? true : "Името на етикета е задължително",
-    //   color: (value) =>
-    //     value.length > 0 ? true : "Цветът на етикета е задължителен",
-    // },
   });
 
   const handleAddTag = (values) => {
@@ -55,28 +56,61 @@ const Tags = () => {
     setTags([...tags, newTag]);
   };
 
+  const handleSubmit = (values) => {
+    console.log(values);
+    form.reset();
+    close();
+    handleAddTag(values);
+  };
+
+  const handleSumbitEdit = (values) => {
+    console.log(values);
+    setTags(
+      tags.map((tag) =>
+        tag.id === values.id
+          ? { ...tag, name: values.name, color: values.color }
+          : tag
+      )
+    );
+    form.reset();
+    close();
+    setIsEditing(false);
+  };
+
+  const handleEdit = (values) => {
+    setIsEditing(true);
+    form.setValues(values);
+    open();
+  };
+
+  const handleClose = () => {
+    form.reset();
+    close();
+  };
+
   return (
     <>
-      <Modal opened={opened} onClose={close} title="Добавяне на етикет">
+      <Modal opened={opened} onClose={handleClose} title="Добавяне на етикет">
         <form
           onSubmit={form.onSubmit((values) => {
-            console.log(values);
-            handleAddTag(values);
+            isEditing ? handleSumbitEdit(values) : handleSubmit(values);
           })}
         >
           <TextInput
+            mt="xs"
             label="Име на етикета"
-            placeholder="Име на етикета"
             key={form.key("name")}
             {...form.getInputProps("name")}
           />
           <ColorInput
+            mt="xs"
             label="Цвят на етикета"
-            placeholder="Цвят на етикета"
             key={form.key("color")}
             {...form.getInputProps("color")}
           />
-          <Button type="submit">Добави</Button>
+          <Button mt="md" type="submit">
+            {isEditing ? "Редакция" : "Добави"}
+          </Button>
         </form>
       </Modal>
       <Flex align="center" justify="space-between">
@@ -95,7 +129,11 @@ const Tags = () => {
             <Badge autoContrast color={tag.color}>
               {tag.name}
             </Badge>
-            <Button>Редакция</Button>
+            <Button
+              onClick={() => handleEdit({ name: tag.name, color: tag.color })}
+            >
+              Редакция
+            </Button>
           </Flex>
         </Card>
       ))}
