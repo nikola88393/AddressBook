@@ -2,6 +2,7 @@ import { AppShell } from "@mantine/core";
 import Entries from "../main/Entries";
 import propTypes from "prop-types";
 import Tags from "../main/Tags";
+import Profile from "../main/Profile";
 
 const elements = [
   {
@@ -14,7 +15,7 @@ const elements = [
   },
   {
     key: "3",
-    children: "children of element 3",
+    children: <Profile />,
   },
 ];
 
