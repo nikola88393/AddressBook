@@ -26,6 +26,10 @@ const Auth = () => {
   const registrationForm = useForm({
     mode: "uncontrolled",
     validate: {
+      firstName: (value) =>
+        value === undefined ? "Името е задължително" : null,
+      lastName: (value) =>
+        value === undefined ? "Фамилията е задължителна" : null,
       email: (value) =>
         value === undefined
           ? "Имейлът е задължителен"
@@ -70,7 +74,7 @@ const Auth = () => {
                 key={loginForm.key("password")}
                 {...loginForm.getInputProps("password")}
               />
-              <Button mt="md" type="submit" w="100%">
+              <Button mt="lg" type="submit" w="100%">
                 Вход
               </Button>
             </form>
@@ -82,24 +86,41 @@ const Auth = () => {
               )}
             >
               <TextInput
+                withAsterisk
+                mt="xs"
+                label="Име"
+                key={registrationForm.key("firstName")}
+                {...registrationForm.getInputProps("firstName")}
+              />
+              <TextInput
+                withAsterisk
+                mt="xs"
+                label="Фамилия"
+                key={registrationForm.key("lastName")}
+                {...registrationForm.getInputProps("lastName")}
+              />
+              <TextInput
+                withAsterisk
                 mt="xs"
                 label="Имейл"
                 key={registrationForm.key("email")}
                 {...registrationForm.getInputProps("email")}
               />
               <PasswordInput
+                withAsterisk
                 mt="xs"
                 label="Парола"
                 key={registrationForm.key("password")}
                 {...registrationForm.getInputProps("password")}
               />
               <PasswordInput
+                withAsterisk
                 mt="xs"
                 label="Повтори паролата"
                 key={registrationForm.key("confirmPassword")}
                 {...registrationForm.getInputProps("confirmPassword")}
               />
-              <Button mt="md" type="submit" w="100%">
+              <Button mt="lg" type="submit" w="100%">
                 Регистрация
               </Button>
             </form>
