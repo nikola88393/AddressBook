@@ -9,9 +9,9 @@ function App() {
     <Routes>
       <Route path="/authenticate" element={<Auth />} />
       {/* The app layout is requires authentication */}
-      <Route element={<RequireAuth />}>
-        <Route path="/" element={<Layout />} />
-      </Route>
+      {/* <Route element={<RequireAuth />}> */}
+      <Route path="/" element={<Layout />} />
+      {/* </Route> */}
 
       <Route path="*" element={<Error404 />} />
     </Routes>

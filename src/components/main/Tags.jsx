@@ -9,29 +9,44 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+// import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 
 const Tags = () => {
-  const [tags, setTags] = useState([
-    {
-      id: 1,
-      name: "Логистика",
-      color: "blue",
-    },
-    {
-      id: 2,
-      name: "Детски магазин",
-      color: "green",
-    },
-    {
-      id: 3,
-      name: "Доставчик",
-      color: "red",
-    },
-  ]);
-
+  // const axiosPrivate = useAxiosPrivate();
+  const [tags, setTags] = useState([]);
   const [opened, { open, close }] = useDisclosure();
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    const getTags = async () => {
+      try {
+        // const response = await axiosPrivate.get("/tags");
+        // setTags(response.data);
+        setTags([
+          {
+            id: 1,
+            name: "Логистика",
+            color: "blue",
+          },
+          {
+            id: 2,
+            name: "Детски магазин",
+            color: "green",
+          },
+          {
+            id: 3,
+            name: "Доставчик",
+            color: "red",
+          },
+        ]);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    getTags();
+  }, []);
 
   const form = useForm({
     mode: "uncontrolled",

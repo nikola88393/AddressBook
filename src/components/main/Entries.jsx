@@ -10,12 +10,16 @@ import {
   Divider,
   Badge,
   Box,
+  Tabs,
+  Fieldset,
+  Group,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { modals } from "@mantine/modals";
+// import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 
-const addressBookData = [
+let addressBookData = [
   {
     id: 1,
     firstName: "Иван",
@@ -29,6 +33,11 @@ const addressBookData = [
     comment: "Основен контакт за логистика",
     badge: "Логистика",
     badgeColor: "blue",
+    additionalFields: [
+      { label: "Длъжност", value: "Директор" },
+      { label: "Сайт", value: "www.petrovlogistics.com" },
+      { label: "Допълнително", value: "Записан на 2 места" },
+    ],
   },
   {
     id: 2,
@@ -90,29 +99,80 @@ const addressBookData = [
 const Entries = () => {
   const [opened, { open, close }] = useDisclosure(false);
   const [activeEntry, setActiveEntry] = useState(null);
-  const [addressBook, setAddressBook] = useState(addressBookData);
+  const [addressBook, setAddressBook] = useState([]);
+  const [refetechTrigger, setRefetechTrigger] = useState(0);
+  // const axiosPrivate = useAxiosPrivate();
+
+  useEffect(() => {
+    const getData = async () => {
+      try {
+        // make api call to get data
+        // const response = await axiosPrivate.get('/addressbook');
+        //  setAddressBook(response.data);
+        setAddressBook(addressBookData);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    getData();
+  }, [refetechTrigger]);
 
   const handleOpen = (entry) => {
     console.log(entry);
     setActiveEntry(entry);
     open();
   };
-  const handleInputChange = (field, value) => {
-    setActiveEntry((prev) => ({ ...prev, [field]: value }));
-  };
 
-  const handleSave = () => {
+  // const handleInputChange = (field, value) => {
+  //   setActiveEntry((prev) => ({ ...prev, [field]: value }));
+  // };
+
+  const updateEntry = () => {
     setAddressBook((prev) =>
       prev.map((entry) =>
         entry.id === activeEntry.id ? { ...activeEntry } : entry
       )
     );
+    // setRefetechTrigger((prev) => prev + 1);
     close();
   };
 
   const deleteEntry = (id) => {
     setAddressBook((prev) => prev.filter((entry) => entry.id !== id));
+    // setRefetechTrigger((prev) => prev + 1);
   };
+
+  const handleInputChange = (field, value, index = null) => {
+    if (index !== null) {
+      setActiveEntry((prev) => {
+        const updatedFields = [...prev.additionalFields];
+        updatedFields[index].value = value;
+        return { ...prev, additionalFields: updatedFields };
+      });
+    } else {
+      setActiveEntry((prev) => ({ ...prev, [field]: value }));
+    }
+  };
+
+  const addCustomField = () => {
+    setActiveEntry((prev) => ({
+      ...prev,
+      additionalFields: [
+        ...(prev.additionalFields || []),
+        { label: "Ново поле", value: "" },
+      ],
+    }));
+  };
+
+  const deleteCustomField = (index) => {
+    setActiveEntry((prev) => {
+      const updatedFields = [...prev.additionalFields];
+      updatedFields.splice(index, 1);
+      return { ...prev, additionalFields: updatedFields };
+    });
+  };
+
   return (
     <>
       <Flex align="center" justify="space-between">
@@ -155,58 +215,108 @@ const Entries = () => {
       <Modal opened={opened} onClose={close} title="Детайли за контакт">
         {activeEntry ? (
           <div>
-            <TextInput
-              label="Име"
-              value={activeEntry.firstName}
-              onChange={(e) => handleInputChange("firstName", e.target.value)}
-            />
-            <TextInput
-              label="Фамилия"
-              value={activeEntry.lastName}
-              onChange={(e) => handleInputChange("lastName", e.target.value)}
-            />
-            <TextInput
-              label="Фирма"
-              value={activeEntry.companyName}
-              onChange={(e) => handleInputChange("companyName", e.target.value)}
-            />
-            <TextInput
-              label="Адрес"
-              value={activeEntry.address}
-              onChange={(e) => handleInputChange("address", e.target.value)}
-            />
-            <TextInput
-              label="Телефон"
-              value={activeEntry.phoneNumber}
-              onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
-            />
-            <TextInput
-              label="Имейл"
-              value={activeEntry.emailAddress}
-              onChange={(e) =>
-                handleInputChange("emailAddress", e.target.value)
-              }
-            />
-            <TextInput
-              label="Факс"
-              value={activeEntry.faxNumber}
-              onChange={(e) => handleInputChange("faxNumber", e.target.value)}
-            />
-            <TextInput
-              label="Мобилен"
-              value={activeEntry.mobilePhoneNumber}
-              onChange={(e) =>
-                handleInputChange("mobilePhoneNumber", e.target.value)
-              }
-            />
-            <TextInput
-              label="Коментар"
-              value={activeEntry.comment}
-              onChange={(e) => handleInputChange("comment", e.target.value)}
-            />
-            <Button onClick={handleSave} mt="md">
-              Запази
-            </Button>
+            <Tabs defaultValue="details" variant="outline">
+              <Tabs.List grow>
+                <Tabs.Tab value="details">Детайли</Tabs.Tab>
+                <Tabs.Tab value="additional">Допълнителни</Tabs.Tab>
+              </Tabs.List>
+              <Tabs.Panel value="details">
+                <TextInput
+                  label="Име"
+                  value={activeEntry.firstName}
+                  onChange={(e) =>
+                    handleInputChange("firstName", e.target.value)
+                  }
+                />
+                <TextInput
+                  label="Фамилия"
+                  value={activeEntry.lastName}
+                  onChange={(e) =>
+                    handleInputChange("lastName", e.target.value)
+                  }
+                />
+                <TextInput
+                  label="Фирма"
+                  value={activeEntry.companyName}
+                  onChange={(e) =>
+                    handleInputChange("companyName", e.target.value)
+                  }
+                />
+                <TextInput
+                  label="Адрес"
+                  value={activeEntry.address}
+                  onChange={(e) => handleInputChange("address", e.target.value)}
+                />
+                <TextInput
+                  label="Телефон"
+                  value={activeEntry.phoneNumber}
+                  onChange={(e) =>
+                    handleInputChange("phoneNumber", e.target.value)
+                  }
+                />
+                <TextInput
+                  label="Имейл"
+                  value={activeEntry.emailAddress}
+                  onChange={(e) =>
+                    handleInputChange("emailAddress", e.target.value)
+                  }
+                />
+                <TextInput
+                  label="Факс"
+                  value={activeEntry.faxNumber}
+                  onChange={(e) =>
+                    handleInputChange("faxNumber", e.target.value)
+                  }
+                />
+                <TextInput
+                  label="Мобилен"
+                  value={activeEntry.mobilePhoneNumber}
+                  onChange={(e) =>
+                    handleInputChange("mobilePhoneNumber", e.target.value)
+                  }
+                />
+                <TextInput
+                  label="Коментар"
+                  value={activeEntry.comment}
+                  onChange={(e) => handleInputChange("comment", e.target.value)}
+                />
+                <Button onClick={updateEntry} mt="md">
+                  Запази
+                </Button>
+              </Tabs.Panel>
+              <Tabs.Panel value="additional">
+                <Button onClick={addCustomField}>Добави поле +</Button>
+                {activeEntry.additionalFields &&
+                  activeEntry.additionalFields.map((field, index) => (
+                    <Fieldset mt="md" mb="md" key={index}>
+                      <TextInput
+                        label="Етикет"
+                        value={field.label}
+                        onChange={(e) =>
+                          handleInputChange("label", e.target.value, index)
+                        }
+                      />
+                      <TextInput
+                        label="Стойност"
+                        value={field.value}
+                        onChange={(e) =>
+                          handleInputChange("value", e.target.value, index)
+                        }
+                      />
+                      <Group mt="md" grow>
+                        <Button
+                          color="red"
+                          size="xs"
+                          onClick={() => deleteCustomField(index)}
+                        >
+                          Изтрий
+                        </Button>
+                        <Button size="xs">Запази</Button>
+                      </Group>
+                    </Fieldset>
+                  ))}
+              </Tabs.Panel>
+            </Tabs>
           </div>
         ) : (
           <p>Няма избрани данни.</p>

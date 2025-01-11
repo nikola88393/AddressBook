@@ -1,6 +1,7 @@
 import { Box, Button, Flex, PasswordInput, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 
 const testUserData = {
   firstName: "Иван",
@@ -9,7 +10,22 @@ const testUserData = {
 };
 
 const Profile = () => {
-  const [userData, setUserData] = useState(testUserData);
+  const axiosPrivate = useAxiosPrivate();
+  const [userData, setUserData] = useState([]);
+
+  useEffect(() => {
+    const getData = async () => {
+      try {
+        // const response = await axiosPrivate.get("/users");
+        // setUserData(response.data);
+        setUserData(testUserData);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    getData();
+  }, []);
 
   const dataform = useForm({
     mode: "uncontrolled",
@@ -59,20 +75,9 @@ const Profile = () => {
   });
 
   const handleSubmit = (values) => {
-    if (!areValuesChanged(values)) {
-      return;
-    }
     console.log("Submitting values:", values);
     setUserData(values);
     alert("Profile updated successfully!");
-  };
-
-  const areValuesChanged = (values) => {
-    return (
-      values.firstName !== userData.firstName ||
-      values.lastName !== userData.lastName ||
-      values.email !== userData.email
-    );
   };
 
   return (
