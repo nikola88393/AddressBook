@@ -20,11 +20,7 @@ const elements = [
 ];
 
 const Main = ({ activeKey }) => {
-  return (
-    <AppShell.Main maw={1500} mr="auto" ml="auto">
-      {elements[activeKey - 1].children}
-    </AppShell.Main>
-  );
+  return <AppShell.Main>{elements[activeKey - 1].children}</AppShell.Main>;
 };
 
 Main.propTypes = {

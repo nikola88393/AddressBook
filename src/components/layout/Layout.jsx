@@ -24,6 +24,7 @@ function Layout() {
       }}
       footer={{ height: 60 }}
       padding="md"
+      layout="alt"
     >
       <Header opened={opened} toggle={toggle} />
       <Navigation activeKey={activeKey} handleKeyChange={handleKeyChange} />

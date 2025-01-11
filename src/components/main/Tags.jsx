@@ -6,19 +6,23 @@ import {
   Modal,
   TextInput,
   ColorInput,
+  Box,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
 import { useState, useEffect } from "react";
+import LoadingElement from "../common/LoadingElement";
 // import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 
 const Tags = () => {
   // const axiosPrivate = useAxiosPrivate();
+  const [isLoading, setIsLoading] = useState(false);
   const [tags, setTags] = useState([]);
   const [opened, { open, close }] = useDisclosure();
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
+    setIsLoading(true);
     const getTags = async () => {
       try {
         // const response = await axiosPrivate.get("/tags");
@@ -42,10 +46,14 @@ const Tags = () => {
         ]);
       } catch (error) {
         console.error(error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    getTags();
+    setTimeout(() => {
+      getTags();
+    }, 2000);
   }, []);
 
   const form = useForm({
@@ -104,7 +112,8 @@ const Tags = () => {
   };
 
   return (
-    <>
+    <Box pos="relative">
+      <LoadingElement isLoading={isLoading} />
       <Modal opened={opened} onClose={handleClose} title="Добавяне на етикет">
         <form
           onSubmit={form.onSubmit((values) => {
@@ -152,7 +161,7 @@ const Tags = () => {
           </Flex>
         </Card>
       ))}
-    </>
+    </Box>
   );
 };
 

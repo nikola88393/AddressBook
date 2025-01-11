@@ -2,6 +2,7 @@ import { Box, Button, Flex, PasswordInput, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useState, useEffect } from "react";
 import useAxiosPrivate from "../../hooks/useAxiosPrivate";
+import LoadingElement from "../common/LoadingElement";
 
 const testUserData = {
   firstName: "Иван",
@@ -10,33 +11,20 @@ const testUserData = {
 };
 
 const Profile = () => {
+  const [loading, setLoading] = useState(false);
+  const [userData, setUserData] = useState({});
   const axiosPrivate = useAxiosPrivate();
-  const [userData, setUserData] = useState([]);
-
-  useEffect(() => {
-    const getData = async () => {
-      try {
-        // const response = await axiosPrivate.get("/users");
-        // setUserData(response.data);
-        setUserData(testUserData);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    getData();
-  }, []);
 
   const dataform = useForm({
     mode: "uncontrolled",
-    initialValues: testUserData,
+    // initialValues: userData,
     validate: {
       firstName: (value) =>
         value === undefined
           ? "Името е задължително"
           : value.length > 15
           ? "Името трябва да е по-малко от 15 символа"
-          : value === testUserData.firstName
+          : value === userData.firstName
           ? "Името трявбва да бъде различно от текущото"
           : null,
       lastName: (value) =>
@@ -44,7 +32,7 @@ const Profile = () => {
           ? "Фамилията е задължителна"
           : value.length > 15
           ? "Фамилията трябва да е по-малко от 15 символа"
-          : value === testUserData.lastName
+          : value === userData.lastName
           ? "Фамилията трявбва да бъде различна от текущата"
           : null,
       email: (value) =>
@@ -52,11 +40,30 @@ const Profile = () => {
           ? "Имейлът е задължителен"
           : !/^\S+@\S+$/.test(value)
           ? "Моля, въведете валиден имейл"
-          : value === testUserData.email
+          : value === userData.email
           ? "Имейлът трявбва да бъде различен"
           : null,
     },
   });
+
+  useEffect(() => {
+    setLoading(true);
+
+    const getData = async () => {
+      try {
+        setUserData(testUserData);
+        dataform.setValues(testUserData);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const timeoutId = setTimeout(getData, 2000);
+
+    return () => clearTimeout(timeoutId); // Clean up timeout
+  }, []);
 
   const passForm = useForm({
     mode: "uncontrolled",
@@ -81,15 +88,16 @@ const Profile = () => {
   };
 
   return (
-    <Box>
+    <Box pos="relative">
       <h1>Профил</h1>
+      <LoadingElement isLoading={loading} />
       <Flex
         align="center"
         justify="start"
         direction={{ base: "column", md: "row" }}
         gap={32}
       >
-        <Box maw={300} w={{ base: "100%", xs: "50%" }}>
+        <Box pos="relative" maw={300} w={{ base: "100%", xs: "50%" }}>
           <form onSubmit={dataform.onSubmit(handleSubmit)}>
             <TextInput
               mt="xs"
@@ -115,7 +123,7 @@ const Profile = () => {
             </Button>
           </form>
         </Box>
-        <Box maw={300} w={{ base: "100%", xs: "50%" }}>
+        <Box pos="relative" maw={300} w={{ base: "100%", xs: "50%" }}>
           <form onSubmit={passForm.onSubmit((values) => console.log(values))}>
             <PasswordInput
               mt="xs"

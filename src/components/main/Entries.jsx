@@ -17,6 +17,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { useEffect, useState } from "react";
 import { modals } from "@mantine/modals";
+import LoadingElement from "../common/LoadingElement";
 // import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 
 let addressBookData = [
@@ -101,9 +102,11 @@ const Entries = () => {
   const [activeEntry, setActiveEntry] = useState(null);
   const [addressBook, setAddressBook] = useState([]);
   const [refetechTrigger, setRefetechTrigger] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   // const axiosPrivate = useAxiosPrivate();
 
   useEffect(() => {
+    setIsLoading(true);
     const getData = async () => {
       try {
         // make api call to get data
@@ -112,10 +115,14 @@ const Entries = () => {
         setAddressBook(addressBookData);
       } catch (error) {
         console.error(error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    getData();
+    setTimeout(() => {
+      getData();
+    }, 2000);
   }, [refetechTrigger]);
 
   const handleOpen = (entry) => {
@@ -174,7 +181,8 @@ const Entries = () => {
   };
 
   return (
-    <>
+    <Box pos="relative">
+      <LoadingElement isLoading={isLoading} />
       <Flex align="center" justify="space-between">
         <h1>Записи</h1>
         <Button onClick={() => handleOpen({})}>+</Button>
@@ -381,7 +389,7 @@ const Entries = () => {
         })}
       </Stack>
       <Pagination w="fit-content" mr="auto" ml="auto" mt="lg" />
-    </>
+    </Box>
   );
 };
 
