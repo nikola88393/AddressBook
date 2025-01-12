@@ -7,8 +7,40 @@ import {
   Button,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import useAxiosPrivate from "../../hooks/useAxiosPrivate";
+import useRefreshToken from "../../hooks/useRefreshToken";
+import useAuth from "../../hooks/useAuth";
 
 const Auth = () => {
+  const axiosPrivate = useAxiosPrivate();
+  const refresh = useRefreshToken();
+  const { auth, setAuth } = useAuth();
+  console.log(auth);
+
+  const handleRegister = async (values) => {
+    try {
+      const response = await axiosPrivate.post("api/auth/register", {
+        email: values.email,
+        password: values.password,
+        firstName: values.firstName,
+        lastName: values.lastName,
+      });
+      console.log(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleLogin = async (values) => {
+    try {
+      const response = await axiosPrivate.post("api/auth/login", values);
+      setAuth({ accessToken: response.data.access_token });
+      console.log(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const loginForm = useForm({
     mode: "uncontrolled",
     validate: {
@@ -59,9 +91,7 @@ const Auth = () => {
             <Tabs.Tab value="registration">Регистрация</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="login">
-            <form
-              onSubmit={loginForm.onSubmit((values) => console.log(values))}
-            >
+            <form onSubmit={loginForm.onSubmit(handleLogin)}>
               <TextInput
                 mt="xs"
                 label="Имейл"
@@ -80,11 +110,7 @@ const Auth = () => {
             </form>
           </Tabs.Panel>
           <Tabs.Panel value="registration">
-            <form
-              onSubmit={registrationForm.onSubmit((values) =>
-                console.log(values)
-              )}
-            >
+            <form onSubmit={registrationForm.onSubmit(handleRegister)}>
               <TextInput
                 withAsterisk
                 mt="xs"
@@ -123,6 +149,7 @@ const Auth = () => {
               <Button mt="lg" type="submit" w="100%">
                 Регистрация
               </Button>
+              <Button onClick={refresh}>Refresh</Button>
             </form>
           </Tabs.Panel>
         </Tabs>

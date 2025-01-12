@@ -1,5 +1,5 @@
 import axios from "axios";
-const BASE_URL = "http://127.0.0.1:8000/";
+const BASE_URL = "https://address-book-api-567333973960.europe-west4.run.app/";
 
 //Create an axios instance with a base URL
 export default axios.create({
