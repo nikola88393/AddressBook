@@ -8,13 +8,14 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import useAxiosPrivate from "../../hooks/useAxiosPrivate";
-import useRefreshToken from "../../hooks/useRefreshToken";
 import useAuth from "../../hooks/useAuth";
+import { useNavigate } from "react-router";
+import { useEffect } from "react";
 
 const Auth = () => {
   const axiosPrivate = useAxiosPrivate();
-  const refresh = useRefreshToken();
   const { auth, setAuth } = useAuth();
+  const navigate = useNavigate();
   console.log(auth);
 
   const handleRegister = async (values) => {
@@ -78,6 +79,12 @@ const Auth = () => {
           : null,
     },
   });
+
+  useEffect(() => {
+    if (auth?.accessToken) {
+      navigate("/", { replace: true });
+    }
+  }, [auth, navigate]);
 
   return (
     <Flex justify="center">
@@ -149,7 +156,6 @@ const Auth = () => {
               <Button mt="lg" type="submit" w="100%">
                 Регистрация
               </Button>
-              <Button onClick={refresh}>Refresh</Button>
             </form>
           </Tabs.Panel>
         </Tabs>
