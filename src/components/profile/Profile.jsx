@@ -62,9 +62,7 @@ const Profile = () => {
       }
     };
 
-    const timeoutId = setTimeout(getData, 2000);
-
-    return () => clearTimeout(timeoutId); // Clean up timeout
+    getData();
   }, []);
 
   const passForm = useForm({

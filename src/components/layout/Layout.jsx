@@ -1,18 +1,12 @@
 import { AppShell } from "@mantine/core";
 import Header from "./Header";
 import Navigation from "./Navigation";
-import Main from "./Main";
 import Footer from "./Footer";
 import { useDisclosure } from "@mantine/hooks";
-import { useState } from "react";
+import { Outlet } from "react-router";
 
 function Layout() {
   const [opened, { toggle }] = useDisclosure();
-  const [activeKey, setActiveKey] = useState("1");
-
-  const handleKeyChange = (key) => {
-    setActiveKey(key);
-  };
 
   return (
     <AppShell
@@ -27,8 +21,10 @@ function Layout() {
       layout="alt"
     >
       <Header opened={opened} toggle={toggle} />
-      <Navigation activeKey={activeKey} handleKeyChange={handleKeyChange} />
-      <Main activeKey={activeKey} />
+      <Navigation />
+      <AppShell.Main>
+        <Outlet />
+      </AppShell.Main>
       <Footer />
     </AppShell>
   );

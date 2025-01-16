@@ -51,9 +51,7 @@ const Tags = () => {
       }
     };
 
-    setTimeout(() => {
-      getTags();
-    }, 2000);
+    getTags();
   }, []);
 
   const form = useForm({

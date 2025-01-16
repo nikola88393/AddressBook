@@ -20,6 +20,7 @@ import { modals } from "@mantine/modals";
 import LoadingElement from "../common/LoadingElement";
 import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import { useForm } from "@mantine/form";
+import { useNavigate } from "react-router";
 
 const Entries = () => {
   const [opened, { open, close }] = useDisclosure(false);
@@ -29,6 +30,7 @@ const Entries = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [customFields, setCustomFields] = useState([]);
   const axiosPrivate = useAxiosPrivate();
+  const navigate = useNavigate();
 
   const addForm = useForm({
     mode: "uncontrolled",
@@ -67,9 +69,7 @@ const Entries = () => {
         setIsLoading(false);
       }
     };
-    setTimeout(() => {
-      getData();
-    }, 1000);
+    getData();
   }, [refetechTrigger, axiosPrivate]);
 
   const handleOpen = () => {
@@ -91,6 +91,7 @@ const Entries = () => {
       const response = await axiosPrivate.post("api/user-record", payload);
       console.log(response.data);
       setRefetechTrigger((prev) => prev + 1);
+      close();
     } catch (error) {
       console.error(error);
     }
@@ -312,7 +313,13 @@ const Entries = () => {
                     <span>{entry.phoneNumber}</span>
                   </Flex>
                   <Flex direction={{ base: "row", xl: "column" }} gap="xs">
-                    <Button onClick={() => handleOpen(entry)}>Виж</Button>
+                    <Button
+                      onClick={() =>
+                        navigate(`/entries/${entry.id}`, { state: entry })
+                      }
+                    >
+                      Виж
+                    </Button>
                     <Button
                       color="red"
                       onClick={() =>

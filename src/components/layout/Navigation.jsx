@@ -6,21 +6,25 @@ import {
   useMantineColorScheme,
 } from "@mantine/core";
 import useAxiosPrivate from "../../hooks/useAxiosPrivate";
-import propTypes from "prop-types";
 import { modals } from "@mantine/modals";
 import useAuth from "../../hooks/useAuth";
+import { useNavigate } from "react-router";
 
 const navLinks = [
-  { key: "1", label: "Записи" },
-  { key: "2", label: "Тагове" },
-  { key: "3", label: "Профил" },
+  { key: "1", label: "Записи", path: "/entries" },
+  { key: "2", label: "Тагове", path: "/tags" },
+  { key: "3", label: "Профил", path: "/profile" },
 ];
 
-const Navigation = ({ activeKey, handleKeyChange }) => {
+const Navigation = () => {
   const { setColorScheme } = useMantineColorScheme();
   const computedColorSheme = useComputedColorScheme("light");
   const axiosPrivate = useAxiosPrivate();
   const { setAuth } = useAuth();
+  const navigate = useNavigate();
+  const activeKey = navLinks.find(
+    (link) => link.path === window.location.pathname
+  )?.key;
 
   const toggleColorScheme = () => {
     setColorScheme(computedColorSheme === "light" ? "dark" : "light");
@@ -41,10 +45,11 @@ const Navigation = ({ activeKey, handleKeyChange }) => {
       {navLinks.map((link) => {
         return (
           <NavLink
+            variant="filled"
             key={link.key}
             label={link.label}
             active={activeKey === link.key}
-            onClick={() => handleKeyChange(link.key)}
+            onClick={() => navigate(link.path)}
           />
         );
       })}
@@ -75,11 +80,6 @@ const Navigation = ({ activeKey, handleKeyChange }) => {
       </Button>
     </AppShell.Navbar>
   );
-};
-
-Navigation.propTypes = {
-  activeKey: propTypes.string,
-  handleKeyChange: propTypes.func,
 };
 
 export default Navigation;
