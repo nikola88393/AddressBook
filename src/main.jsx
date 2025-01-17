@@ -8,16 +8,19 @@ import { MantineProvider } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
 import { BrowserRouter } from "react-router";
 import { AuthProvider } from "./context/AuthProvider.jsx";
+import { TagsProvider } from "./context/TagsProvider.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <MantineProvider defaultColorScheme="dark">
       <AuthProvider>
-        <ModalsProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
-        </ModalsProvider>
+        <TagsProvider>
+          <ModalsProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </ModalsProvider>
+        </TagsProvider>
       </AuthProvider>
     </MantineProvider>
   </React.StrictMode>

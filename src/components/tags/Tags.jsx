@@ -7,52 +7,21 @@ import {
   TextInput,
   ColorInput,
   Box,
+  Stack,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { modals } from "@mantine/modals";
 import LoadingElement from "../common/LoadingElement";
+import useTags from "../../hooks/useTags";
 // import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 
 const Tags = () => {
-  // const axiosPrivate = useAxiosPrivate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [tags, setTags] = useState([]);
   const [opened, { open, close }] = useDisclosure();
   const [isEditing, setIsEditing] = useState(false);
-
-  useEffect(() => {
-    setIsLoading(true);
-    const getTags = async () => {
-      try {
-        // const response = await axiosPrivate.get("/tags");
-        // setTags(response.data);
-        setTags([
-          {
-            id: 1,
-            name: "Логистика",
-            color: "blue",
-          },
-          {
-            id: 2,
-            name: "Детски магазин",
-            color: "green",
-          },
-          {
-            id: 3,
-            name: "Доставчик",
-            color: "red",
-          },
-        ]);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    getTags();
-  }, []);
+  const [editedTag, setEditedTag] = useState(null);
+  const { tags, updateTag, deleteTag, createTag, isLoading } = useTags();
 
   const form = useForm({
     mode: "uncontrolled",
@@ -68,38 +37,25 @@ const Tags = () => {
     },
   });
 
-  const handleAddTag = (values) => {
-    const newTag = {
-      id: tags.length + 1,
-      name: values.name,
-      color: values.color,
-    };
-    setTags([...tags, newTag]);
-  };
-
   const handleSubmit = (values) => {
     console.log(values);
     form.reset();
     close();
-    handleAddTag(values);
+    createTag(values);
   };
 
   const handleSumbitEdit = (values) => {
     console.log(values);
-    setTags(
-      tags.map((tag) =>
-        tag.id === values.id
-          ? { ...tag, name: values.name, color: values.color }
-          : tag
-      )
-    );
+    updateTag(editedTag, { name: values.name, color: values.color });
     form.reset();
     close();
     setIsEditing(false);
+    setEditedTag(null);
   };
 
   const handleEdit = (values) => {
     setIsEditing(true);
+    setEditedTag(values.id);
     form.setValues(values);
     open();
   };
@@ -107,6 +63,12 @@ const Tags = () => {
   const handleClose = () => {
     form.reset();
     close();
+    setIsEditing(false);
+    setEditedTag(null);
+  };
+
+  const handleDelete = (id) => {
+    deleteTag(id);
   };
 
   return (
@@ -139,26 +101,48 @@ const Tags = () => {
         <h1>Етикети</h1>
         <Button onClick={open}>+</Button>
       </Flex>
-      {tags.map((tag) => (
-        <Card
-          key={tag.id}
-          shadow="xs"
-          padding="xl"
-          radius="md"
-          style={{ marginBottom: "1rem" }}
-        >
-          <Flex align="center" justify="space-between">
-            <Badge autoContrast color={tag.color}>
-              {tag.name}
-            </Badge>
-            <Button
-              onClick={() => handleEdit({ name: tag.name, color: tag.color })}
-            >
-              Редакция
-            </Button>
-          </Flex>
-        </Card>
-      ))}
+      {tags.length > 0 ? (
+        tags.map((tag) => (
+          <Card
+            key={tag.id}
+            shadow="xs"
+            padding="xl"
+            radius="md"
+            style={{ marginBottom: "1rem" }}
+          >
+            <Flex align="center" justify="space-between">
+              <Badge autoContrast color={tag.color}>
+                {tag.name}
+              </Badge>
+              <Stack>
+                <Button onClick={() => handleEdit(tag)}>Редакция</Button>
+                <Button
+                  bg="red"
+                  onClick={() =>
+                    modals.openConfirmModal({
+                      title: "Изтриване на етикет",
+                      centered: true,
+                      children:
+                        "Сигурни ли сте, че искате да изтриете този етикет?",
+                      labels: { cancel: "Отказ", confirm: "Изтрий" },
+                      confirmProps: { color: "red" },
+                      onConfirm: () => {
+                        handleDelete(tag.id);
+                        modals.close();
+                      },
+                      onCancel: () => modals.close(),
+                    })
+                  }
+                >
+                  Изтрий
+                </Button>
+              </Stack>
+            </Flex>
+          </Card>
+        ))
+      ) : (
+        <div>Няма етикети</div>
+      )}
     </Box>
   );
 };
