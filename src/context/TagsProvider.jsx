@@ -8,7 +8,7 @@ export const TagsProvider = ({ children }) => {
   const [tags, setTags] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const axiosPrivate = useAxiosPrivate();
-  const [refetechTrigger, setRefetechTrigger] = useState(0);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -25,12 +25,12 @@ export const TagsProvider = ({ children }) => {
     };
 
     fetchTags();
-  }, [refetechTrigger, axiosPrivate]);
+  }, [refetchTrigger, axiosPrivate]);
 
   const updateTag = async (id, values) => {
     try {
       const response = await axiosPrivate.patch(`api/tag/${id}/`, values);
-      setRefetechTrigger((prev) => prev + 1);
+      setRefetchTrigger((prev) => prev + 1);
       console.log(response);
     } catch (error) {
       console.error(error);
@@ -43,7 +43,7 @@ export const TagsProvider = ({ children }) => {
       const response = await axiosPrivate.delete(`api/tag/delete`, {
         data: { tagId: id },
       });
-      setRefetechTrigger((prev) => prev + 1);
+      setRefetchTrigger((prev) => prev + 1);
       console.log(response);
     } catch (error) {
       console.error(error);
@@ -54,7 +54,7 @@ export const TagsProvider = ({ children }) => {
   const createTag = async (values) => {
     try {
       const response = await axiosPrivate.post("api/tag/", values);
-      setRefetechTrigger((prev) => prev + 1);
+      setRefetchTrigger((prev) => prev + 1);
       console.log(response);
     } catch (error) {
       console.error(error);
@@ -64,7 +64,15 @@ export const TagsProvider = ({ children }) => {
 
   return (
     <TagsContext.Provider
-      value={{ tags, isLoading, updateTag, createTag, deleteTag, error }}
+      value={{
+        tags,
+        isLoading,
+        updateTag,
+        createTag,
+        deleteTag,
+        error,
+        setRefetchTrigger,
+      }}
     >
       {children}
     </TagsContext.Provider>

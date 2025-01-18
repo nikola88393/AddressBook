@@ -7,11 +7,10 @@ import {
   TextInput,
   ColorInput,
   Box,
-  Stack,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { modals } from "@mantine/modals";
 import LoadingElement from "../common/LoadingElement";
 import useTags from "../../hooks/useTags";
@@ -21,7 +20,18 @@ const Tags = () => {
   const [opened, { open, close }] = useDisclosure();
   const [isEditing, setIsEditing] = useState(false);
   const [editedTag, setEditedTag] = useState(null);
-  const { tags, updateTag, deleteTag, createTag, isLoading } = useTags();
+  const {
+    tags,
+    updateTag,
+    deleteTag,
+    createTag,
+    isLoading,
+    setRefetchTrigger,
+  } = useTags();
+
+  useEffect(() => {
+    setRefetchTrigger((prev) => prev + 1);
+  }, [setRefetchTrigger]);
 
   const form = useForm({
     mode: "uncontrolled",
@@ -105,16 +115,21 @@ const Tags = () => {
         tags.map((tag) => (
           <Card
             key={tag.id}
-            shadow="xs"
             padding="xl"
             radius="md"
             style={{ marginBottom: "1rem" }}
+            withBorder
           >
-            <Flex align="center" justify="space-between">
-              <Badge autoContrast color={tag.color}>
+            <Flex
+              direction={{ base: "column", md: "row" }}
+              gap="xl"
+              justify="space-between"
+              align={{ base: "start", md: "center" }}
+            >
+              <Badge autoContrast size="lg" color={tag.color}>
                 {tag.name}
               </Badge>
-              <Stack>
+              <Flex direction={{ base: "row", xl: "column" }} gap="xs">
                 <Button onClick={() => handleEdit(tag)}>Редакция</Button>
                 <Button
                   bg="red"
@@ -136,7 +151,7 @@ const Tags = () => {
                 >
                   Изтрий
                 </Button>
-              </Stack>
+              </Flex>
             </Flex>
           </Card>
         ))

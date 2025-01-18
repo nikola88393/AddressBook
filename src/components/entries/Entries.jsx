@@ -25,9 +25,14 @@ import useTags from "../../hooks/useTags";
 const Entries = () => {
   const [opened, { open, close }] = useDisclosure(false);
   const { tags } = useTags();
-  const [addressBook, setAddressBook] = useState([]);
+  const [addressBook, setAddressBook] = useState({ records: [], total: 0 });
   const [refetechTrigger, setRefetechTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [activePage, setPage] = useState(1);
+  const [exportData, setExportData] = useState(null);
+  const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState({ firstName: "", lastName: "" });
+
   const axiosPrivate = useAxiosPrivate();
   const navigate = useNavigate();
 
@@ -41,12 +46,31 @@ const Entries = () => {
     },
   });
 
+  const exportForm = useForm({
+    mode: "uncontrolled",
+    initialValues: {
+      exportType: "csv",
+    },
+  });
+
+  const searchForm = useForm({
+    mode: "uncontrolled",
+    validate: {
+      search: (value) =>
+        value === undefined ? "Търсенето е задължително" : null,
+    },
+  });
+
   // Fetch data from the server
   useEffect(() => {
     setIsLoading(true);
     const getData = async () => {
       try {
-        const response = await axiosPrivate.get("api/user-record");
+        const response = await axiosPrivate.get(
+          `api/user-record/?page=${activePage}${filter || ""}${
+            search.firstName && `&firstName=${search.firstName}`
+          }${search.lastName && `&lastName=${search.lastName}`}`
+        );
         console.log(response);
         setAddressBook(response.data);
       } catch (error) {
@@ -56,15 +80,20 @@ const Entries = () => {
       }
     };
     getData();
-  }, [refetechTrigger, axiosPrivate]);
+  }, [refetechTrigger, axiosPrivate, activePage, filter, search]);
 
   // Add record
   const handleAddRecord = async (values) => {
     try {
       console.log(values);
-      const response = await axiosPrivate.post("api/user-record", values);
+      const { tagId, ...record } = values;
+      const response = await axiosPrivate.post("api/user-record", {
+        record,
+        tagId,
+      });
       console.log(response.data);
       setRefetechTrigger((prev) => prev + 1);
+      addForm.reset();
       close();
     } catch (error) {
       console.error(error);
@@ -84,12 +113,75 @@ const Entries = () => {
     }
   };
 
+  //Handle export records
+  const handleExportRecords = async (values) => {
+    try {
+      const response = await axiosPrivate.get(
+        `api/user-record/export-records?format=${values.exportType}`,
+        { responseType: "blob" } // Important: Set response type to 'blob'
+      );
+
+      // Create a Blob from the response data
+      const blob = new Blob([response.data], {
+        type: response.headers["content-type"],
+      });
+
+      // Create a URL for the Blob
+      const downloadUrl = URL.createObjectURL(blob);
+
+      // Create a temporary anchor element to trigger the download
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `exported_records.${values.exportType}`; // Set the file name
+      document.body.appendChild(a);
+      a.click();
+
+      // Clean up
+      URL.revokeObjectURL(downloadUrl);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Export failed:", error);
+    }
+  };
+
+  const handleFilter = (value) => {
+    setSearch({ firstName: "", lastName: "" });
+    setFilter(value);
+  };
+
+  const handleSearch = (values) => {
+    setFilter("");
+    const name = values.search.split(" ");
+    setSearch({ firstName: name[0] || "", lastName: name[1] || "" });
+    console.log({ firstName: name[0] || "", lastName: name[1] || "" });
+  };
+
   return (
-    <Box pos="relative">
+    <Box pos="relative" h="100%">
       <LoadingElement isLoading={isLoading} />
-      <Flex align="center" justify="space-between">
+      <Flex
+        align={{ base: "start", xs: "center" }}
+        justify="space-between"
+        direction={{ base: "column", xs: "row" }}
+        mb={{ base: "lg", md: "0" }}
+      >
         <h1>Записи</h1>
-        <Button onClick={open}>+</Button>
+        <form onSubmit={exportForm.onSubmit(handleExportRecords)}>
+          <Flex align="end" gap="md">
+            <NativeSelect
+              data={[
+                { label: "CSV", value: "csv" },
+                { label: "JSON", value: "json" },
+                { label: "XLSX", value: "xlsx" },
+              ]}
+              key={exportForm.key("exportType")}
+              {...exportForm.getInputProps("exportType")}
+            />
+            <Button type="submit">Експорт</Button>
+            <Divider orientation="vertical" />
+            <Button onClick={open}>+</Button>
+          </Flex>
+        </form>
       </Flex>
 
       <Flex
@@ -98,31 +190,38 @@ const Entries = () => {
         align={{ base: "start", md: "center" }}
         gap="md"
       >
-        <Flex
-          w={{ base: "100%", md: "auto" }}
-          direction={{ base: "column", xs: "row" }}
-          align="center"
-          gap="md"
-        >
-          <NativeSelect
-            label="Подреди по"
-            w={{ base: "100%", md: "auto" }}
-            data={["Всички", "Еднакви имена", "Еднакви фамилии", "Обобщено"]}
-          />
-          <NativeSelect
-            label="Етикети"
-            w={{ base: "100%", md: "auto" }}
-            data={["Всички", "Еднакви имена", "Еднакви фамилии", "Обобщено"]}
-          />
-        </Flex>
-        <Flex w={{ base: "100%", md: "auto" }} gap="md" align="end">
-          <TextInput
-            w={{ base: "100%", md: "auto" }}
-            placeholder="Търсене по име"
-            label="Търсене по име"
-          />
-          <Button>?</Button>
-        </Flex>
+        <Select
+          data={[
+            { label: "Всички", value: "" },
+            {
+              label: "Еднакви имена",
+              value: "&sameFirstNameDiffLastName=true",
+            },
+            {
+              label: "Еднакви фамилии",
+              value: "&sameLastNameDiffFirstName=true",
+            },
+            { label: "Обобщено", value: "&mostUsedTags=true" },
+          ]}
+          onChange={handleFilter}
+          placeholder="Филтриране"
+          label="Филтриране"
+          value={filter}
+        />
+        <form onSubmit={searchForm.onSubmit(handleSearch)}>
+          <Flex w={{ base: "100%", md: "auto" }} gap="md" align="end">
+            <TextInput
+              w={{ base: "100%", md: "auto" }}
+              placeholder="Търсене по име"
+              label="Търсене по име"
+              key={searchForm.key("search")}
+              {...searchForm.getInputProps("search")}
+            />
+            <Button type="submit" mt>
+              ?
+            </Button>
+          </Flex>
+        </form>
       </Flex>
       <Modal opened={opened} onClose={close} title="Детайли за контакт">
         <div>
@@ -135,8 +234,8 @@ const Entries = () => {
                   value: tag.id,
                 };
               })}
-              key={addForm.key("tag")}
-              {...addForm.getInputProps("tag")}
+              key={addForm.key("tagId")}
+              {...addForm.getInputProps("tagId")}
             />
             <TextInput
               withAsterisk
@@ -193,24 +292,24 @@ const Entries = () => {
       </Modal>
       <Divider my="sm" />
       <Stack>
-        {addressBook.length === 0 ? (
+        {addressBook.records.length === 0 ? (
           <div>Няма записи</div>
         ) : (
-          addressBook.map((entry) => (
+          addressBook.records.map((entry) => (
             <Box pos="relative" p={10} key={entry.id}>
-              {entry.badge && (
+              {entry.tags && entry.tags.length > 0 && (
                 <Badge
                   radius="sm"
-                  color={entry.badgeColor}
+                  color={entry.tags[0].color}
                   style={{ zIndex: 2 }}
                   pos="absolute"
                   top={4}
                   left={30}
                 >
-                  {entry.badge}
+                  {entry.tags[0].name}
                 </Badge>
               )}
-              <Card p="xl">
+              <Card p="xl" withBorder>
                 <Flex
                   direction={{ base: "column", md: "row" }}
                   gap="md"
@@ -257,7 +356,14 @@ const Entries = () => {
           ))
         )}
       </Stack>
-      <Pagination w="fit-content" mr="auto" ml="auto" mt="lg" />
+      <Pagination
+        w="fit-content"
+        mr="auto"
+        ml="auto"
+        value={activePage}
+        onChange={setPage}
+        total={Math.ceil(addressBook.total / 10)}
+      />
     </Box>
   );
 };

@@ -1,41 +1,41 @@
 import { TextInput, Button, Flex, Box, Modal } from "@mantine/core";
-import { useLocation } from "react-router";
+import { useParams } from "react-router";
 import { useForm } from "@mantine/form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
-
-const additionalFields = [
-  {
-    id: 1,
-    name: "ДДС",
-    value: "BG123456789",
-  },
-  {
-    id: 2,
-    name: "МОЛ",
-    value: "Иван Иванов",
-  },
-  {
-    id: 3,
-    name: "ЕИК",
-    value: "123456789",
-  },
-];
+import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 
 const Entry = () => {
   const [isEdditing, setIsEdditing] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
   const [isFieldEditing, setIsFieldEditing] = useState(false);
-  const location = useLocation();
-  const entry = location.state;
-  console.log(entry);
+  const [editingFieldId, setEditingFieldId] = useState(null);
+  const [refetechTrigger, setRefetechTrigger] = useState(0);
+  const [record, setRecord] = useState(null);
+  const { entryId } = useParams();
+  const axiosPrivate = useAxiosPrivate();
+  console.log(entryId);
 
   const editForm = useForm({
     mode: "uncontrolled",
-    initialValues: entry,
     validate: {},
   });
+
+  useEffect(() => {
+    const getRecord = async () => {
+      try {
+        const response = await axiosPrivate.get(`api/user-record/${entryId}`);
+        console.log(response);
+        setRecord(response.data);
+        editForm.setValues(response.data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    getRecord();
+  }, [axiosPrivate, entryId, refetechTrigger]);
 
   const customFieldForm = useForm({
     mode: "uncontrolled",
@@ -46,34 +46,67 @@ const Entry = () => {
     },
   });
 
+  const addCustomField = async (values) => {
+    try {
+      const response = await axiosPrivate.post(
+        `api/custom-field/${entryId}`,
+        values
+      );
+      console.log(response);
+      close();
+      setRefetechTrigger((prev) => prev + 1);
+      setIsFieldEditing(false);
+      setEditingFieldId(null);
+      customFieldForm.reset();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const editCustomField = async (values) => {
+    try {
+      const response = await axiosPrivate.patch(
+        `api/custom-field/${editingFieldId}`,
+        values
+      );
+      console.log(response);
+      close();
+      setRefetechTrigger((prev) => prev + 1);
+      setIsFieldEditing(false);
+      setEditingFieldId(null);
+      customFieldForm.reset();
+    } catch (error) {
+      console;
+    }
+  };
+
+  const deleteCustomField = async (fieldId) => {
+    try {
+      const response = await axiosPrivate.delete(`api/custom-field/${fieldId}`);
+      console.log(response);
+      setRefetechTrigger((prev) => prev + 1);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const handleClose = () => {
     customFieldForm.reset();
     setIsFieldEditing(false);
+    setEditingFieldId(null);
     close();
   };
 
-  //add field
-  const handleAddField = (values) => {
-    console.log(values);
-    close();
-    customFieldForm.reset();
-  };
-
-  //edit field
-  const handleEditField = (values) => {
-    console.log(values);
-    close();
-    customFieldForm.reset();
-  };
   //open modal for editting field
   const handleOpenEditField = (field) => {
     setIsFieldEditing(true);
+    setEditingFieldId(field.id);
     customFieldForm.setValues({ name: field.name, value: field.value });
     console.log(field);
     open();
   };
 
-  if (!entry) {
+  if (!record) {
     return <div>Entry not found</div>;
   }
 
@@ -87,7 +120,7 @@ const Entry = () => {
       >
         <form
           onSubmit={customFieldForm.onSubmit(
-            isFieldEditing ? handleEditField : handleAddField
+            isFieldEditing ? editCustomField : addCustomField
           )}
         >
           <TextInput
@@ -174,8 +207,8 @@ const Entry = () => {
             <Button onClick={open}>+</Button>
           </Flex>
 
-          {additionalFields.length > 0 ? (
-            additionalFields.map((field) => {
+          {record.customFields.length > 0 ? (
+            record.customFields.map((field) => {
               return (
                 <Box key={field.id}>
                   <TextInput
@@ -199,7 +232,7 @@ const Entry = () => {
                           labels: { cancel: "Отказ", confirm: "Изтрий" },
                           confirmProps: { color: "red" },
                           onConfirm: () => {
-                            console.log("delete");
+                            deleteCustomField(field.id);
                             modals.close();
                           },
                           onCancel: () => modals.close(),

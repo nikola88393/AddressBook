@@ -3,6 +3,7 @@ import { useForm } from "@mantine/form";
 import { useState, useEffect } from "react";
 import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import LoadingElement from "../common/LoadingElement";
+import { data } from "react-router";
 
 const testUserData = {
   firstName: "Иван",
@@ -13,7 +14,26 @@ const testUserData = {
 const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState({});
+  const [refetechTrigger, setRefetechTrigger] = useState(0);
   const axiosPrivate = useAxiosPrivate();
+
+  useEffect(() => {
+    setLoading(true);
+
+    const getUserData = async () => {
+      try {
+        const response = await axiosPrivate.get("api/auth/current-user");
+        setUserData(response.data);
+        dataform.setValues(response.data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getUserData();
+  }, [refetechTrigger, axiosPrivate]);
 
   const dataform = useForm({
     mode: "uncontrolled",
@@ -46,30 +66,9 @@ const Profile = () => {
     },
   });
 
-  useEffect(() => {
-    setLoading(true);
-
-    const getData = async () => {
-      try {
-        // const response = await axiosPrivate.get("/users/me");
-        // setUserData(response.data);
-        setUserData(testUserData);
-        dataform.setValues(testUserData);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getData();
-  }, []);
-
   const passForm = useForm({
     mode: "uncontrolled",
     validate: {
-      oldPassword: (value) =>
-        value === undefined ? "Старата парола е задължителна" : null,
       newPassword: (value) =>
         value === undefined ? "Новата парола е задължителна" : null,
       confirmPassword: (value, values) =>
@@ -81,10 +80,14 @@ const Profile = () => {
     },
   });
 
-  const handleSubmit = (values) => {
-    console.log("Submitting values:", values);
-    setUserData(values);
-    alert("Profile updated successfully!");
+  const handleUpdate = async (values) => {
+    try {
+      const response = await axiosPrivate.patch("api/auth/update", values);
+      console.log(response.data);
+      passForm.reset();
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -98,7 +101,7 @@ const Profile = () => {
         gap={32}
       >
         <Box pos="relative" maw={300} w={{ base: "100%", xs: "50%" }}>
-          <form onSubmit={dataform.onSubmit(handleSubmit)}>
+          <form onSubmit={dataform.onSubmit(handleUpdate)}>
             <TextInput
               mt="xs"
               mb="md"
@@ -124,13 +127,11 @@ const Profile = () => {
           </form>
         </Box>
         <Box pos="relative" maw={300} w={{ base: "100%", xs: "50%" }}>
-          <form onSubmit={passForm.onSubmit((values) => console.log(values))}>
-            <PasswordInput
-              mt="xs"
-              label="Стара парола"
-              key={passForm.key("oldPassword")}
-              {...passForm.getInputProps("oldPassword")}
-            />
+          <form
+            onSubmit={passForm.onSubmit((values) =>
+              handleUpdate({ password: values.newPassword })
+            )}
+          >
             <PasswordInput
               mt="xs"
               label="Нова парола"
