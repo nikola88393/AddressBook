@@ -1,10 +1,12 @@
-import { TextInput, Button, Flex, Box, Modal } from "@mantine/core";
+import { TextInput, Button, Flex, Box, Modal, Select } from "@mantine/core";
 import { useParams } from "react-router";
 import { useForm } from "@mantine/form";
 import { useEffect, useState } from "react";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import useAxiosPrivate from "../../hooks/useAxiosPrivate";
+import useTags from "../../hooks/useTags";
+import { Notification } from "@mantine/core";
 
 const Entry = () => {
   const [isEdditing, setIsEdditing] = useState(false);
@@ -13,8 +15,10 @@ const Entry = () => {
   const [editingFieldId, setEditingFieldId] = useState(null);
   const [refetechTrigger, setRefetechTrigger] = useState(0);
   const [record, setRecord] = useState(null);
+  const [error, setError] = useState(null);
   const { entryId } = useParams();
   const axiosPrivate = useAxiosPrivate();
+  const { tags } = useTags();
   console.log(entryId);
 
   const editForm = useForm({
@@ -22,15 +26,28 @@ const Entry = () => {
     validate: {},
   });
 
+  const setInitialValues = (data) => {
+    editForm.setValues(data);
+    if (data.tags?.length > 0) {
+      editForm.setFieldValue(
+        "tagId",
+        tags.find((tag) => tag.id === data.tags[0].id).id
+      );
+    }
+  };
+
   useEffect(() => {
     const getRecord = async () => {
       try {
         const response = await axiosPrivate.get(`api/user-record/${entryId}`);
         console.log(response);
         setRecord(response.data);
-        editForm.setValues(response.data);
+        setInitialValues(response.data);
       } catch (error) {
         console.error(error);
+        setError(
+          error.response?.data?.message || "Грешка при зареждане на данните"
+        );
       }
     };
 
@@ -46,6 +63,33 @@ const Entry = () => {
     },
   });
 
+  const updateRecord = async (values) => {
+    // values.tags[0].id = values.tagId;
+    console.log(typeof values);
+    delete values.tags;
+    delete values.customFields;
+    delete values.id;
+    delete values.userId;
+    const { tagId, ...updatedRecord } = values;
+    // console.log(tags, record);
+    try {
+      const response = await axiosPrivate.post(
+        `api/user-record/update/${record.id}`,
+        {
+          tagId,
+          updatedRecord,
+        }
+      );
+      console.log(response);
+      setRefetechTrigger((prev) => prev + 1);
+    } catch (error) {
+      console.error(error);
+      setError(
+        error.response?.data?.message || "Грешка при обновяване на данните"
+      );
+    }
+  };
+
   const addCustomField = async (values) => {
     try {
       const response = await axiosPrivate.post(
@@ -60,6 +104,9 @@ const Entry = () => {
       customFieldForm.reset();
     } catch (error) {
       console.error(error);
+      setError(
+        error.response?.data?.message || "Грешка при добавяне на данните"
+      );
     }
   };
 
@@ -76,7 +123,10 @@ const Entry = () => {
       setEditingFieldId(null);
       customFieldForm.reset();
     } catch (error) {
-      console;
+      console.log(error);
+      setError(
+        error.response?.data?.message || "Грешка при редактиране на данните"
+      );
     }
   };
 
@@ -87,9 +137,13 @@ const Entry = () => {
       setRefetechTrigger((prev) => prev + 1);
     } catch (error) {
       console.error(error);
+      setError(
+        error.response?.data?.message || "Грешка при изтриване на данните"
+      );
     }
   };
 
+  //handle modal close
   const handleClose = () => {
     customFieldForm.reset();
     setIsFieldEditing(false);
@@ -113,6 +167,12 @@ const Entry = () => {
   return (
     <Flex align="start" direction="column">
       <h1>Запис</h1>
+      {error && (
+        <Notification onClose={() => setError(null)} color="red" title="Грешка">
+          {error}
+        </Notification>
+      )}
+
       <Modal
         opened={opened}
         onClose={handleClose}
@@ -145,61 +205,87 @@ const Entry = () => {
         maw={800}
       >
         <Box w={{ base: "100%", xs: "50%" }}>
-          <h3>Основна информация</h3>
-          <TextInput
-            readOnly={!isEdditing}
-            label="Име"
-            key={editForm.key("firstName")}
-            {...editForm.getInputProps("firstName")}
-          />
-          <TextInput
-            readOnly={!isEdditing}
-            label="Фамилия"
-            key={editForm.key("lastName")}
-            {...editForm.getInputProps("lastName")}
-          />
-          <TextInput
-            readOnly={!isEdditing}
-            label="Фирма"
-            key={editForm.key("companyName")}
-            {...editForm.getInputProps("companyName")}
-          />
-          <TextInput
-            readOnly={!isEdditing}
-            label="Адрес"
-            key={editForm.key("address")}
-            {...editForm.getInputProps("address")}
-          />
-          <TextInput
-            readOnly={!isEdditing}
-            label="Телефон"
-            key={editForm.key("phoneNumber")}
-            {...editForm.getInputProps("phoneNumber")}
-          />
-          <TextInput
-            readOnly={!isEdditing}
-            label="Имейл"
-            key={editForm.key("email")}
-            {...editForm.getInputProps("email")}
-          />
-          <TextInput
-            readOnly={!isEdditing}
-            label="Факс"
-            key={editForm.key("faxNumber")}
-            {...editForm.getInputProps("faxNumber")}
-          />
-          <TextInput
-            readOnly={!isEdditing}
-            label="Мобилен"
-            key={editForm.key("mobilePhoneNumber")}
-            {...editForm.getInputProps("mobilePhoneNumber")}
-          />
-          <TextInput
-            readOnly={!isEdditing}
-            label="Коментар"
-            key={editForm.key("comment")}
-            {...editForm.getInputProps("comment")}
-          />
+          <form onSubmit={editForm.onSubmit(updateRecord)}>
+            <h3>Основна информация</h3>
+            <Select
+              label="Етикет"
+              readOnly={!isEdditing}
+              data={tags.map((tag) => {
+                return {
+                  label: tag.name,
+                  value: tag.id,
+                };
+              })}
+              key={editForm.key("tagId")}
+              {...editForm.getInputProps("tagId")}
+            />
+            <TextInput
+              readOnly={!isEdditing}
+              label="Име"
+              key={editForm.key("firstName")}
+              {...editForm.getInputProps("firstName")}
+            />
+            <TextInput
+              readOnly={!isEdditing}
+              label="Фамилия"
+              key={editForm.key("lastName")}
+              {...editForm.getInputProps("lastName")}
+            />
+            <TextInput
+              readOnly={!isEdditing}
+              label="Фирма"
+              key={editForm.key("companyName")}
+              {...editForm.getInputProps("companyName")}
+            />
+            <TextInput
+              readOnly={!isEdditing}
+              label="Адрес"
+              key={editForm.key("address")}
+              {...editForm.getInputProps("address")}
+            />
+            <TextInput
+              readOnly={!isEdditing}
+              label="Телефон"
+              key={editForm.key("phoneNumber")}
+              {...editForm.getInputProps("phoneNumber")}
+            />
+            <TextInput
+              readOnly={!isEdditing}
+              label="Имейл"
+              key={editForm.key("email")}
+              {...editForm.getInputProps("email")}
+            />
+            <TextInput
+              readOnly={!isEdditing}
+              label="Факс"
+              key={editForm.key("faxNumber")}
+              {...editForm.getInputProps("faxNumber")}
+            />
+            <TextInput
+              readOnly={!isEdditing}
+              label="Мобилен"
+              key={editForm.key("mobilePhoneNumber")}
+              {...editForm.getInputProps("mobilePhoneNumber")}
+            />
+            <TextInput
+              readOnly={!isEdditing}
+              label="Коментар"
+              key={editForm.key("comment")}
+              {...editForm.getInputProps("comment")}
+            />
+            {isEdditing ? (
+              <Flex mt="md" gap={16}>
+                <Button bg="red" onClick={() => setIsEdditing(!isEdditing)}>
+                  Отказ
+                </Button>
+                <Button type="submit">Запази</Button>
+              </Flex>
+            ) : (
+              <Button mt="md" onClick={() => setIsEdditing(!isEdditing)}>
+                Редактирай
+              </Button>
+            )}
+          </form>
         </Box>
         <Box w={{ base: "100%", xs: "50%" }}>
           <Flex justify="space-between" align="center">
@@ -250,18 +336,6 @@ const Entry = () => {
           )}
         </Box>
       </Flex>
-      {isEdditing ? (
-        <Flex mt="md" gap={16}>
-          <Button bg="red" onClick={() => setIsEdditing(!isEdditing)}>
-            Отказ
-          </Button>
-          <Button>Запази</Button>
-        </Flex>
-      ) : (
-        <Button mt="md" onClick={() => setIsEdditing(!isEdditing)}>
-          Редактирай
-        </Button>
-      )}
     </Flex>
   );
 };

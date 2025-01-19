@@ -1,20 +1,21 @@
-import { Box, Button, Flex, PasswordInput, TextInput } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Flex,
+  Notification,
+  PasswordInput,
+  TextInput,
+} from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useState, useEffect } from "react";
 import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import LoadingElement from "../common/LoadingElement";
-import { data } from "react-router";
-
-const testUserData = {
-  firstName: "Иван",
-  lastName: "Иванов",
-  email: "ivan@abv.bg",
-};
 
 const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState({});
   const [refetechTrigger, setRefetechTrigger] = useState(0);
+  const [error, setError] = useState(null);
   const axiosPrivate = useAxiosPrivate();
 
   useEffect(() => {
@@ -27,6 +28,7 @@ const Profile = () => {
         dataform.setValues(response.data);
       } catch (error) {
         console.error(error);
+        setError(error.response?.data?.message || "Възникна грешка");
       } finally {
         setLoading(false);
       }
@@ -44,24 +46,18 @@ const Profile = () => {
           ? "Името е задължително"
           : value.length > 15
           ? "Името трябва да е по-малко от 15 символа"
-          : value === userData.firstName
-          ? "Името трявбва да бъде различно от текущото"
           : null,
       lastName: (value) =>
         value === undefined
           ? "Фамилията е задължителна"
           : value.length > 15
           ? "Фамилията трябва да е по-малко от 15 символа"
-          : value === userData.lastName
-          ? "Фамилията трявбва да бъде различна от текущата"
           : null,
       email: (value) =>
         value === undefined
           ? "Имейлът е задължителен"
           : !/^\S+@\S+$/.test(value)
           ? "Моля, въведете валиден имейл"
-          : value === userData.email
-          ? "Имейлът трявбва да бъде различен"
           : null,
     },
   });
@@ -81,21 +77,40 @@ const Profile = () => {
   });
 
   const handleUpdate = async (values) => {
+    const hasChanged = Object.keys(values).some(
+      (key) => values[key] !== userData[key]
+    );
+
+    if (!hasChanged) {
+      return dataform.setErrors({
+        firstName: "Няма промени",
+        lastName: "Няма промени",
+        email: "Няма промени",
+      });
+    }
+
     try {
       const response = await axiosPrivate.patch("api/auth/update", values);
       console.log(response.data);
       passForm.reset();
+      setRefetechTrigger((prev) => prev + 1);
     } catch (error) {
       console.error(error);
+      setError(error.response?.data?.message || "Възникна грешка");
     }
   };
 
   return (
     <Box pos="relative">
+      {error && (
+        <Notification color="red" title="Грешка" onClose={() => setError(null)}>
+          {error}
+        </Notification>
+      )}
       <h1>Профил</h1>
       <LoadingElement isLoading={loading} />
       <Flex
-        align="center"
+        align="start"
         justify="start"
         direction={{ base: "column", md: "row" }}
         gap={32}

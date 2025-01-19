@@ -1,7 +1,9 @@
 import { Burger, AppShell, Center, Box } from "@mantine/core";
 import propTypes from "prop-types";
+import { useNavigate } from "react-router";
 
 const Header = ({ opened, toggle }) => {
+  const navigate = useNavigate();
   return (
     <AppShell.Header
       style={{
@@ -17,7 +19,7 @@ const Header = ({ opened, toggle }) => {
       {/* Centered logo */}
       <Center style={{ flex: 1 }}>
         <Box>
-          <h1>Addrly</h1>
+          <h1 onClick={() => navigate("/")}>Addrly</h1>
         </Box>
       </Center>
     </AppShell.Header>

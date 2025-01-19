@@ -7,6 +7,7 @@ import {
   TextInput,
   ColorInput,
   Box,
+  Notification,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
@@ -20,6 +21,7 @@ const Tags = () => {
   const [opened, { open, close }] = useDisclosure();
   const [isEditing, setIsEditing] = useState(false);
   const [editedTag, setEditedTag] = useState(null);
+
   const {
     tags,
     updateTag,
@@ -27,6 +29,7 @@ const Tags = () => {
     createTag,
     isLoading,
     setRefetchTrigger,
+    error,
   } = useTags();
 
   useEffect(() => {
@@ -83,6 +86,12 @@ const Tags = () => {
 
   return (
     <Box pos="relative">
+      {error && (
+        <Notification color="red" title="Грешка">
+          {error.response?.data?.message || "Възникна грешка"}
+        </Notification>
+      )}
+
       <LoadingElement isLoading={isLoading} />
       <Modal opened={opened} onClose={handleClose} title="Добавяне на етикет">
         <form

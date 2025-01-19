@@ -12,6 +12,7 @@ import {
   Box,
   Select,
   Textarea,
+  Notification,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useEffect, useState } from "react";
@@ -29,9 +30,9 @@ const Entries = () => {
   const [refetechTrigger, setRefetechTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [activePage, setPage] = useState(1);
-  const [exportData, setExportData] = useState(null);
   const [filter, setFilter] = useState("");
   const [search, setSearch] = useState({ firstName: "", lastName: "" });
+  const [error, setError] = useState(null);
 
   const axiosPrivate = useAxiosPrivate();
   const navigate = useNavigate();
@@ -75,6 +76,9 @@ const Entries = () => {
         setAddressBook(response.data);
       } catch (error) {
         console.error(error);
+        setError(
+          error.response?.data?.message || "Грешка при зареждане на данните"
+        );
       } finally {
         setIsLoading(false);
       }
@@ -97,6 +101,7 @@ const Entries = () => {
       close();
     } catch (error) {
       console.error(error);
+      setError(error.response?.data?.message || "Грешка при добавяне на запис");
     }
   };
 
@@ -110,6 +115,9 @@ const Entries = () => {
       setRefetechTrigger((prev) => prev + 1);
     } catch (error) {
       console.error(error);
+      setError(
+        error.response?.data?.message || "Грешка при изтриване на запис"
+      );
     }
   };
 
@@ -141,6 +149,7 @@ const Entries = () => {
       document.body.removeChild(a);
     } catch (error) {
       console.error("Export failed:", error);
+      setError(error.response?.data?.message || "Грешка при експорт на записи");
     }
   };
 
@@ -158,6 +167,11 @@ const Entries = () => {
 
   return (
     <Box pos="relative" h="100%">
+      {error && (
+        <Notification onClose={() => setError(null)} color="red" title="Грешка">
+          {error}
+        </Notification>
+      )}
       <LoadingElement isLoading={isLoading} />
       <Flex
         align={{ base: "start", xs: "center" }}
@@ -317,7 +331,7 @@ const Entries = () => {
                   align={{ base: "start", md: "center" }}
                 >
                   <Flex direction={{ base: "column", md: "row" }} gap="xl">
-                    <span>{entry.firstName + " " + entry.lastName}</span>
+                    <span>{entry.firstName + " " + entry.lastName || ""}</span>
                     <span>{entry.email}</span>
                     <span>{entry.phoneNumber}</span>
                   </Flex>

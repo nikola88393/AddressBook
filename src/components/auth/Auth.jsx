@@ -11,36 +11,18 @@ import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import useAuth from "../../hooks/useAuth";
 import { useNavigate } from "react-router";
 import { useEffect } from "react";
+import { useState } from "react";
+import useTags from "../../hooks/useTags";
 
 const Auth = () => {
   const axiosPrivate = useAxiosPrivate();
   const { auth, setAuth } = useAuth();
+  const [loginError, setLoginError] = useState(null);
+  const [registrationError, setRegistrationError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const { setRefetchTrigger } = useTags();
   const navigate = useNavigate();
   console.log(auth);
-
-  const handleRegister = async (values) => {
-    try {
-      const response = await axiosPrivate.post("api/auth/register", {
-        email: values.email,
-        password: values.password,
-        firstName: values.firstName,
-        lastName: values.lastName,
-      });
-      console.log(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleLogin = async (values) => {
-    try {
-      const response = await axiosPrivate.post("api/auth/login", values);
-      setAuth({ accessToken: response.data.access_token });
-      console.log(response.data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   const loginForm = useForm({
     mode: "uncontrolled",
@@ -80,6 +62,51 @@ const Auth = () => {
     },
   });
 
+  const handleRegister = async (values) => {
+    try {
+      const response = await axiosPrivate.post("api/auth/register", {
+        email: values.email,
+        password: values.password,
+        firstName: values.firstName,
+        lastName: values.lastName,
+      });
+      console.log(response.data);
+      registrationForm.reset();
+      setSuccess(true);
+    } catch (error) {
+      console.error(error);
+      setRegistrationError(error.response?.data?.message);
+    }
+  };
+
+  const handleLogin = async (values) => {
+    try {
+      const response = await axiosPrivate.post("api/auth/login", values);
+      setAuth({ accessToken: response.data.access_token });
+      console.log(response.data);
+      loginForm.reset();
+      setRefetchTrigger((prev) => prev + 1);
+    } catch (error) {
+      console.error(error);
+      setLoginError(error.response?.data?.message);
+    }
+  };
+
+  useEffect(() => {
+    if (loginError) {
+      loginForm.setErrors({ email: loginError, password: loginError });
+    }
+    if (registrationError) {
+      registrationForm.setErrors({
+        firstName: registrationError,
+        lastName: registrationError,
+        email: registrationError,
+        password: registrationError,
+        confirmPassword: registrationError,
+      });
+    }
+  }, [loginError, registrationError]);
+
   useEffect(() => {
     if (auth?.accessToken) {
       navigate("/", { replace: true });
@@ -92,7 +119,7 @@ const Auth = () => {
         <h1>Вход/Регистрация</h1>
         <h2>Addrly</h2>
 
-        <Tabs defaultValue="login">
+        <Tabs maw={289} defaultValue="login">
           <Tabs.List grow>
             <Tabs.Tab value="login">Вход</Tabs.Tab>
             <Tabs.Tab value="registration">Регистрация</Tabs.Tab>
@@ -117,6 +144,12 @@ const Auth = () => {
             </form>
           </Tabs.Panel>
           <Tabs.Panel value="registration">
+            {success && (
+              <span style={{ color: "green" }}>
+                Успешна регистрация! Вече може да влезете в профила си.
+              </span>
+            )}
+
             <form onSubmit={registrationForm.onSubmit(handleRegister)}>
               <TextInput
                 withAsterisk

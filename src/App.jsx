@@ -7,6 +7,7 @@ import Entries from "./components/entries/Entries";
 import Tags from "./components/tags/Tags";
 import Profile from "./components/profile/Profile";
 import Entry from "./components/entries/Entry";
+import Home from "./components/home/Home";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
       {/* The app layout is requires authentication */}
       <Route element={<RequireAuth />}>
         <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
           <Route index path="/entries" element={<Entries />} />
           <Route path="/entries/:entryId" element={<Entry />} />
           <Route path="/tags" element={<Tags />} />
