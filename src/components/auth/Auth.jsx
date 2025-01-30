@@ -41,10 +41,18 @@ const Auth = () => {
   const registrationForm = useForm({
     mode: "uncontrolled",
     validate: {
-      firstName: (value) =>
-        value === undefined ? "Името е задължително" : null,
-      lastName: (value) =>
-        value === undefined ? "Фамилията е задължителна" : null,
+      firstName: (value) => {
+        if (!value) return "Името е задължително";
+        return /^[a-zA-ZÀ-ÿ\s'-]+$/.test(value)
+          ? null
+          : "Невалидно име (разрешени са букви, тирета и апострофи)";
+      },
+      lastName: (value) => {
+        if (!value) return "Името е задължително";
+        return /^[a-zA-ZÀ-ÿ\s'-]+$/.test(value)
+          ? null
+          : "Невалидно име (разрешени са букви, тирета и апострофи)";
+      },
       email: (value) =>
         value === undefined
           ? "Имейлът е задължителен"

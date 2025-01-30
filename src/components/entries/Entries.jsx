@@ -40,10 +40,34 @@ const Entries = () => {
   const addForm = useForm({
     mode: "uncontrolled",
     validate: {
-      firstName: (value) =>
-        value === undefined ? "Името е задължително" : null,
-      phoneNumber: (value) =>
-        value === undefined ? "Телефонът е задължителен" : null,
+      firstName: (value) => {
+        if (!value) return "Името е задължително";
+        return /^[a-zA-ZÀ-ÿ\s'-]+$/.test(value)
+          ? null
+          : "Невалидно име (разрешени са букви, тирета и апострофи)";
+      },
+      lastName: (value) =>
+        /^[a-zA-ZÀ-ÿ\s'-]*$/.test(value || "") ? null : "Невалидна фамилия",
+      companyName: (value) =>
+        /^[a-zA-Z0-9À-ÿ\s'&.,-]*$/.test(value || "")
+          ? null
+          : "Невалидно име на фирма",
+      address: (value) =>
+        /^[\w\s/,.-]*$/.test(value || "") ? null : "Невалиден адрес",
+      phoneNumber: (value) => {
+        if (!value) return "Телефонът е задължителен";
+        return /^\+?[0-9\s-()]{6,}$/.test(value)
+          ? null
+          : "Невалиден формат на телефон";
+      },
+      email: (value) =>
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value || "")
+          ? null
+          : "Невалиден имейл адрес",
+      faxNumber: (value) =>
+        /^\+?[0-9\s-()]*$/.test(value || "") ? null : "Невалиден факс номер",
+      mobilePhoneNumber: (value) =>
+        /^\+?[0-9\s-()]*$/.test(value || "") ? null : "Невалиден мобилен номер",
     },
   });
 

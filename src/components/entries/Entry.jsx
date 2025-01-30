@@ -23,7 +23,36 @@ const Entry = () => {
 
   const editForm = useForm({
     mode: "uncontrolled",
-    validate: {},
+    validate: {
+      firstName: (value) => {
+        if (!value) return "Името е задължително";
+        return /^[a-zA-ZÀ-ÿ\s'-]+$/.test(value)
+          ? null
+          : "Невалидно име (разрешени са букви, тирета и апострофи)";
+      },
+      lastName: (value) =>
+        /^[a-zA-ZÀ-ÿ\s'-]*$/.test(value || "") ? null : "Невалидна фамилия",
+      companyName: (value) =>
+        /^[a-zA-Z0-9À-ÿ\s'&.,-]*$/.test(value || "")
+          ? null
+          : "Невалидно име на фирма",
+      address: (value) =>
+        /^[\w\s/,.-]*$/.test(value || "") ? null : "Невалиден адрес",
+      phoneNumber: (value) => {
+        if (!value) return "Телефонът е задължителен";
+        return /^\+?[0-9\s-()]{6,}$/.test(value)
+          ? null
+          : "Невалиден формат на телефон";
+      },
+      email: (value) =>
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value || "")
+          ? null
+          : "Невалиден имейл адрес",
+      faxNumber: (value) =>
+        /^\+?[0-9\s-()]*$/.test(value || "") ? null : "Невалиден факс номер",
+      mobilePhoneNumber: (value) =>
+        /^\+?[0-9\s-()]*$/.test(value || "") ? null : "Невалиден мобилен номер",
+    },
   });
 
   const setInitialValues = (data) => {
@@ -64,14 +93,12 @@ const Entry = () => {
   });
 
   const updateRecord = async (values) => {
-    // values.tags[0].id = values.tagId;
     console.log(typeof values);
     delete values.tags;
     delete values.customFields;
     delete values.id;
     delete values.userId;
     const { tagId, ...updatedRecord } = values;
-    // console.log(tags, record);
     try {
       const response = await axiosPrivate.post(
         `api/user-record/update/${record.id}`,
@@ -185,10 +212,12 @@ const Entry = () => {
         >
           <TextInput
             label="Име"
+            withAsterisk
             key={customFieldForm.key("name")}
             {...customFieldForm.getInputProps("name")}
           />
           <TextInput
+            withAsterisk
             label="Стойност"
             key={customFieldForm.key("value")}
             {...customFieldForm.getInputProps("value")}
@@ -222,6 +251,7 @@ const Entry = () => {
             <TextInput
               readOnly={!isEdditing}
               label="Име"
+              withAsterisk
               key={editForm.key("firstName")}
               {...editForm.getInputProps("firstName")}
             />
@@ -246,6 +276,7 @@ const Entry = () => {
             <TextInput
               readOnly={!isEdditing}
               label="Телефон"
+              withAsterisk
               key={editForm.key("phoneNumber")}
               {...editForm.getInputProps("phoneNumber")}
             />
