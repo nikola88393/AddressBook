@@ -21,7 +21,7 @@ function Layout() {
       layout="alt"
     >
       <Header opened={opened} toggle={toggle} />
-      <Navigation />
+      <Navigation toggle={toggle} />
       <AppShell.Main>
         <Outlet />
       </AppShell.Main>

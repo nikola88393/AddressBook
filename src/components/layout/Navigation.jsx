@@ -16,7 +16,7 @@ const navLinks = [
   { key: "3", label: "Профил", path: "/profile" },
 ];
 
-const Navigation = () => {
+const Navigation = ({ toggle }) => {
   const { setColorScheme } = useMantineColorScheme();
   const computedColorSheme = useComputedColorScheme("light");
   const axiosPrivate = useAxiosPrivate();
@@ -49,7 +49,10 @@ const Navigation = () => {
             key={link.key}
             label={link.label}
             active={activeKey === link.key}
-            onClick={() => navigate(link.path)}
+            onClick={() => {
+              toggle();
+              navigate(link.path);
+            }}
           />
         );
       })}
